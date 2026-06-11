@@ -6,6 +6,20 @@
           
         Arguments=$1 
 
+
+
+		     LOG() {
+		     
+		     local USER=$1
+			     echo " $(date) : $1 " | sudo tee -a /opt/devops/logs/log.txt
+		     
+		     
+		     }
+
+
+
+
+
          USER_ENTRY() {                
 		      
 		       local USERNAME=$1
@@ -30,14 +44,35 @@
 
 		      then 
 			   echo " USER: "$USERNAME" ALREADY EXIST ON THIS SERVER "
-			   exit 1
-		   else    
+			   
+		      else    
 			    
-			    sudo useradd -m  "$USERNAME"       			      
-			      
-			    sudo usermod -g devops_team "$USERNAME"
+			    
+
+      			    sudo useradd -m -s /bin/bash -p '*' "$USERNAME"     # create a passwordless user only access with ssh keys 
+
+
+
+			         if ! getent group "devops_team" >/dev/null
+		                 then 
+		                       sudo groupadd devops_team 
+			          fi	
+
+
+                           
+      			    sudo usermod -g devops_team "$USERNAME"
+
 
 			    sudo delgroup $USERNAME
+
+
+                                    if ! getent group "PROJECT_CHARLIE" >/dev/null
+		                    then 
+		                         sudo groupadd PROJECT_CHARLIE 
+			            fi	 
+
+
+
 
 			    sudo usermod -aG PROJECT_CHARLIE "$USERNAME"
 
@@ -107,6 +142,7 @@
                  fi
           
              echo " HII USER WELCOME TO THIS ENVIRONMENT "
+	     
 
 
 	     
@@ -129,6 +165,8 @@
 	               	sudo mkdir -p  "/opt/devops/logs"
 	
                      fi
+
+		     
 
 		                                                              #4 : Check for the Network Status
 
@@ -160,12 +198,19 @@
 
 
                 USER_ENTRY "$2" "$3" "$4"
+		
+		     
+	         LOG "$2"
+
+		
 
 
 
 
 	else 
-            echo " PLEASE ENTER VALID ARGUMENT TO ACCESS "		
+            echo " PLEASE ENTER VALID ARGUMENT TO ACCESS "
+
+
 	    echo "          HELP GUIDE 
 	               
 	            TO CHECK ENV  >>>>    USAGE : ./core_ops.sh <init_env>
