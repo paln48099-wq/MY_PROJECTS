@@ -8,25 +8,28 @@
 
          USER_ENTRY() {                
 		      
-		       USERNAME=$1
-		       SECTION=$2
+		       local USERNAME=$1
+		       local SECTION=$2
+		       local SSH_PUBLIC_KEY=$3
       
-		      if [  $# -ne 2 ] 
+		      if [  $# -ne 3 ] 
 		      then 
 			      echo " ERROR!! PLEASE FILL THE DETAILS AGAIN "
 
-			      echo " USAGE : <USERNAME> <SECTION> "
+			      echo " USAGE : <username> <section> <ssh_public_key> "
 
 		              exit 1
-		     else
-		          echo " PLEASE WAIT FOR FEW SECONDS SYSTEM IS CHECKING FOR THE GIVEN USERNAME: '$USERNAME' AND SECTION : '$SECTION' " 
-		      fi 
+		      fi
+
+
+		          echo " PLEASE WAIT FOR FEW SECONDS SYSTEM IS CHECKING FOR THE GIVEN USERNAME: '$USERNAME'  SECTION : '$SECTION' AND VERIFYING THE PROVIDED KEY " 
+		       
 
 
 		      if id "$USERNAME" >/dev/null 2>&1
 
 		      then 
-			   echo " USER: "$1" ALREADY EXIST ON THIS SERVER "
+			   echo " USER: "$USERNAME" ALREADY EXIST ON THIS SERVER "
 			   exit 1
 		   else    
 			    
@@ -41,24 +44,52 @@
 			      
                               if [ ! -d "/home/$USERNAME/$SECTION" ]
 			      then 
-				   sudo mkdir -p "/home/$1/$2"
+				   sudo mkdir -p "/home/$USERNAME/$SECTION"
 			      fi	    
 			      	      
 
 			       
-			     sudo chown "$USERNAME":devops_team "/home/$USERNAME/$SECTION"
+			     sudo chown -R "$USERNAME":devops_team "/home/$USERNAME"              # -R is used to flow the command to subfolders 
 
 
-			     echo  " USER : '$1' IS SUCCESSFULLY LOGGED IN THE SERVER IN THE SECTION : '$SECTION' "  
+			     echo  " USER : '$USERNAME' IS SUCCESSFULLY LOGGED IN THE SERVER IN THE SECTION : '$SECTION' "  
 
 
-		      fi 
+      		      fi 
 
 
+                           
+		      local SSH_DIR="/home/$USERNAME/.ssh"
 		      
 		      
-		      
-		      }
+		      local SSH_AUTH_FILE="$SSH_DIR/authorized_keys"
+
+		          
+		      if [ ! -d "$SSH_DIR" ] 
+		      then 
+			  sudo mkdir -p "$SSH_DIR"
+                       fi 
+
+
+		       echo "$SSH_PUBLIC_KEY" | sudo tee -a "$SSH_AUTH_FILE" >/dev/null             # /dev/null is used becz "tee" command gives output to the terminal   
+
+
+		       sudo chmod 700 "$SSH_DIR"
+
+		       sudo chmod 600 "$SSH_AUTH_FILE"
+		        
+		       sudo chown -R "$USERNAME":devops_team  $SSH_DIR
+
+		       
+
+
+		       echo " SSH_FILE AUTHORIZATION IS ESTABLISHED AND SSH_KEY IS ACTIVE . USE THE SERVER SECURELY " 
+
+
+                       
+
+
+	 }
 
 
 
@@ -120,15 +151,15 @@
              elif [ "$Arguments" == init_login ]
 	     then
 
-		     if [ $# -ne 3 ]
+		     if [ $# -ne 4 ]
 		      then 
-		           echo " ERROR!! USAGE: ./core_ops.sh <init_login> <USERNAME> <SECTION> "
+		           echo " ERROR!! USAGE: ./core_ops.sh <init_login> <username> <section> <ssh_public_key> "
 	              exit 1
                       fi 
                     
 
 
-                USER_ENTRY "$2" "$3"
+                USER_ENTRY "$2" "$3" "$4"
 
 
 
@@ -139,7 +170,7 @@
 	               
 	            TO CHECK ENV  >>>>    USAGE : ./core_ops.sh <init_env>
 
-		    TO LOGIN      >>>>    USAGE : ./core_ops.sh <init_login> <username> <section name> "
+		    TO LOGIN      >>>>    USAGE : ./core_ops.sh <init_login> <username> <section name> <ssh_public_key> "
 
 	fi
 
