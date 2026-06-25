@@ -11,10 +11,58 @@
 		     LOG() {
 		     
 		     local USER=$1
-			     echo " $(date) : $1 " | sudo tee -a /opt/devops/logs/log.txt
+			     echo " $(date) : $USER " | sudo tee -a /opt/devops/logs/log.txt
 		     
 		     
-		     }
+		   }
+
+
+
+
+	   GIT_CHECK(){
+	   
+	   	     if ! command -v git >/dev/null 2>&1
+	             then
+
+		     echo " ERROR !!!  GIT IS NOT INSTALLED ON THIS SERVER
+		            PLEASE INSTALL GIT BY USING COMMAND <sudo apt install git> "
+
+		     exit 1 
+	             fi
+
+ 
+                      if [ ! -d ".git" ]
+		      then 
+
+			     echo "
+			            LOCAL GIT REPOSITORY FOLDER DOESNT EXISTS 
+			            PLEASE INITIATE LOCAL GIT BY USING COMMAND <git init> 
+
+				    "
+
+			     exit 1 
+		      fi
+	   
+	             LOCAL_REPO_STATUS=$(git status --porcelain)   # -n checks for non zero string length   &&  --porcelain is used for cleaner output of git status
+		      
+
+		     if [ -n "$LOCAL_REPO_STATUS" ] 
+		     then 
+			     echo "
+			            WARNING !!!! ALERT !!!!
+
+			            YOUR LOCAL REPO IS NOT CLEAN
+
+			            YOU  HAVE UNCOMMITED OR MODIFIED CHANGES IN YOUR  LOCAL REPO       
+				    
+				    "
+
+				      
+	                     exit 1
+		     fi
+	   
+	   
+	   }
 
 
 
@@ -63,7 +111,7 @@
       			    sudo usermod -g devops_team "$USERNAME"
 
 
-			    sudo delgroup $USERNAME
+			    sudo delgroup $USERNAME >/dev/null
 
 
                                     if ! getent group "PROJECT_CHARLIE" >/dev/null
@@ -113,12 +161,15 @@
 
 		       sudo chmod 600 "$SSH_AUTH_FILE"
 		        
-		       sudo chown -R "$USERNAME":devops_team  $SSH_DIR
+		       sudo chown -R "$USERNAME":devops_team "$SSH_DIR"             
+
+
 
 		       
 
 
 		       echo " SSH_FILE AUTHORIZATION IS ESTABLISHED AND SSH_KEY IS ACTIVE . USE THE SERVER SECURELY " 
+
 
 
                        
@@ -157,7 +208,7 @@
 
            
 
-                                                                         #3 : Now we check for the existing directory
+                                                                         # Now we check for the existing directory
 
                     if [ ! -d "/opt/devops/logs" ]
                     then
@@ -168,7 +219,7 @@
 
 		     
 
-		                                                              #4 : Check for the Network Status
+		                                                              #  Check for the Network Status
 
 
 	            LOCAL_IP=$(hostname -I | awk '{print$1}') 
@@ -202,11 +253,29 @@
 		     
 	         LOG "$2"
 
-		
 
 
 
+	 elif [ "$Arguments" == git_validate ]
+	 then 
 
+              if [ $# -ne 1 ]
+	      then
+
+		      echo " ERROR !!! USAGE: .core_ops.sh <git_validate> " 
+
+		      exit 1
+	      else 
+		      GIT_CHECK
+
+
+	      fi
+
+	
+
+	    
+ 
+             
 	else 
             echo " PLEASE ENTER VALID ARGUMENT TO ACCESS "
 
@@ -215,7 +284,9 @@
 	               
 	            TO CHECK ENV  >>>>    USAGE : ./core_ops.sh <init_env>
 
-		    TO LOGIN      >>>>    USAGE : ./core_ops.sh <init_login> <username> <section name> <ssh_public_key> "
+		    TO LOGIN      >>>>    USAGE : ./core_ops.sh <init_login> <username> <section name> <ssh_public_key> 
+
+		    TO VALIDATE GIT >>>>  USAGE : ./core_ops.sh <git_validate> "
 
 	fi
 
